@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const words = ['КОД', 'МАМА', 'КОТ']; // Можешь изменить на любые 3
+const words = ['КОД', ];
 
 export default function SecondChallenge({ onComplete }: { onComplete: () => void }) {
+     const navigation = useNavigation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [input, setInput] = useState('');
   const [attempts, setAttempts] = useState<string[][]>([]);
@@ -19,19 +21,20 @@ export default function SecondChallenge({ onComplete }: { onComplete: () => void
       else return 'red';
     });
 
-    setAttempts(prev => [...prev, feedback]);
-    if (input.toUpperCase() === currentWord) {
-      if (currentIndex === words.length - 1) {
-        onComplete();
-      } else {
-        setCurrentIndex(currentIndex + 1);
-        setAttempts([]);
-        setInput('');
-      }
-    } else {
-      setInput('');
-    }
-  };
+     setAttempts(prev => [...prev, feedback]);
+        if (input.toUpperCase() === currentWord) {
+          if (currentIndex === words.length - 1) {
+
+            navigation.navigate('ThirdChallenge'); // Добавьте эту строку
+          } else {
+            setCurrentIndex(currentIndex + 1);
+            setAttempts([]);
+            setInput('');
+          }
+        } else {
+          setInput('');
+        }
+      };
 
   return (
     <KeyboardAvoidingView

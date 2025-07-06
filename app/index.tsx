@@ -11,12 +11,17 @@ import {
 import {
   GestureHandlerRootView,
   PinchGestureHandler,
+  FlingGestureHandler,
+    Directions,
+     PanGestureHandler,
   State
 } from 'react-native-gesture-handler';
 import { Easing } from 'react-native-reanimated';
 import RouletteScreen from './Rouletka';
 import FirstChallenge from './FirstChall';
+import SecondChallenge from './SecChall';
 import ThirdChallenge from './ThirdChallenge';
+
 
 
 
@@ -25,34 +30,26 @@ const { width, height } = Dimensions.get('window');
 
 const images = [
   require('../assets/images/hi1.jpg'),
-  require('../assets/images/hi2.jpg'),
-  require('../assets/images/hi3.jpg'),
-  require('../assets/images/hi4.jpg'),
-  require('../assets/images/hi5.jpg'),
-  require('../assets/images/hi6.jpg'),
-  require('../assets/images/hi7.jpg'),
-  require('../assets/images/hi8.jpg'),
-  require('../assets/images/hi9.jpg'),
-  require('../assets/images/hi10.jpg'),
-  require('../assets/images/hi11.jpg'),
-  require('../assets/images/hi12.jpg'),
-  require('../assets/images/hi13.jpg'),
-  require('../assets/images/hi14.jpg'),
   require('../assets/images/hi15.jpg'),
-  require('../assets/images/hi16.jpg'),
   require('../assets/images/hi18.jpg'),
-  require('../assets/images/hi19.jpg'),
-  require('../assets/images/hi20.jpg'),
-  require('../assets/images/hi21.jpg'),
   require('../assets/images/hi22.jpg'),
-  require('../assets/images/hi23.jpg'),
-  require('../assets/images/hi24.jpg'),
-  require('../assets/images/hi25.jpg'),
-  require('../assets/images/hi26.jpg'),
-  require('../assets/images/hi27.jpg'),
-  require('../assets/images/hi28.jpg'),
-  require('../assets/images/hi29.jpg'),
-  require('../assets/images/hi30.jpg')
+  require('../assets/images/hi41.jpg'),
+  require('../assets/images/hi43.jpg'),
+  require('../assets/images/hi49.jpg'),
+  require('../assets/images/hi48.jpg'),
+  require('../assets/images/hi34.jpg'),
+  require('../assets/images/hi16.jpg'),
+  require('../assets/images/hi11.jpg'),
+  require('../assets/images/hi37.jpg'),
+  require('../assets/images/hi13.jpg'),
+  require('../assets/images/hi77.jpg'),
+  require('../assets/images/hi3.jpg'),
+  require('../assets/images/hi78.jpg'),
+  require('../assets/images/hi32.jpg'),
+  require('../assets/images/hi88.jpg'),
+  require('../assets/images/hi4.jpg'),
+  require('../assets/images/hi45.jpg'),
+  require('../assets/images/hi39.jpg')
 ];
 
 export default function App() {
@@ -66,6 +63,7 @@ export default function App() {
   const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [babiesBorn, setBabiesBorn] = useState(0);
 const rocketY = useRef(new Animated.Value(0)).current;
+  const [isAnimating, setIsAnimating] = useState(false);
 const [showRocket, setShowRocket] = useState(false);
 const [showBlackScreen, setShowBlackScreen] = useState(false);
 
@@ -132,7 +130,13 @@ useEffect(() => {
   }
 }, [screen]);
 
-
+  const onFling = ({ nativeEvent }) => {
+    if (nativeEvent.direction === Directions.RIGHT) {
+      goPrev();
+    } else if (nativeEvent.direction === Directions.LEFT) {
+      goNext();
+    }
+  };
 
   const handleReadyPress = () => {
     const newCount = readyPresses + 1;
@@ -179,6 +183,17 @@ const handleClaimPrize = () => {
 };
 
 
+  const onPanGestureEvent = ({ nativeEvent }) => {
+    if (isAnimating || nativeEvent.state !== State.ACTIVE) return;
+
+    // Определяем свайп по смещению, а не по скорости
+    if (nativeEvent.translationX > 50) { // Свайп вправо
+      goPrev();
+    } else if (nativeEvent.translationX < -50) { // Свайп влево
+      goNext();
+    }
+  };
+
   const onPinchStateChange = ({ nativeEvent }) => {
     if (nativeEvent.oldState === State.ACTIVE) {
       Animated.spring(scale, {
@@ -187,6 +202,8 @@ const handleClaimPrize = () => {
       }).start();
     }
   };
+
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -261,51 +278,61 @@ const handleClaimPrize = () => {
 )}
 
 
+{screen === 'final' && (
+  <RouletteScreen onComplete={() => setScreen('firstChall')} />
+)}
+
 {screen === 'firstChallenge' && (
   <FirstChallenge onComplete={() => setScreen('secondChallenge')} />
 )}
 {screen === 'secondChallenge' && (
-  <SecondChallenge onComplete={() => setScreen('final')} />
+  <SecondChallenge onComplete={() => setScreen('thirdChallenge')} />
 )}
 {screen === 'thirdChallenge' && (
   <ThirdChallenge onReturn={() => setScreen('start')} />
 )}
 
         {screen === 'gallery' && (
-          <View style={styles.container}>
-            <TouchableOpacity
-              style={[styles.navButton, styles.prevButton]}
-              onPress={goPrev}
-              disabled={currentIndex === 0}
-            >
-              <Text style={styles.navButtonText}>〈</Text>
-            </TouchableOpacity>
+                 <PanGestureHandler
+                   onGestureEvent={onPanGestureEvent}
+                   minDeltaX={10} // Минимальное расстояние для определения свайпа
+                   activeOffsetX={[-10, 10]} // Активная зона по X
+                 >
+                   <View style={styles.container}>
+                     <TouchableOpacity
+                       style={[styles.navButton, styles.prevButton]}
+                       onPress={goPrev}
+                       disabled={currentIndex === 0}
+                     >
+                       <Text style={styles.navButtonText}>〈</Text>
+                     </TouchableOpacity>
 
-            <View style={styles.imageContainer}>
-              <PinchGestureHandler
-                onGestureEvent={onPinchEvent}
-                onHandlerStateChange={onPinchStateChange}
-              >
-                <Animated.Image
-                  source={images[currentIndex]}
-                  style={[styles.image, { transform: [{ scale }] }]}
-                  resizeMode="contain"
-                />
-              </PinchGestureHandler>
-              <Text style={styles.counter}>
-                {currentIndex + 1} / {images.length}
-              </Text>
-            </View>
+                     <PinchGestureHandler
+                       onGestureEvent={onPinchEvent}
+                       onHandlerStateChange={onPinchStateChange}
+                     >
+                       <Animated.View style={styles.imageContainer}>
+                         <Animated.Image
+                           source={images[currentIndex]}
+                           style={[styles.image, { transform: [{ scale }] }]}
+                           resizeMode="contain"
+                         />
+                         <Text style={styles.counter}>
+                           {currentIndex + 1} / {images.length}
+                         </Text>
+                       </Animated.View>
+                     </PinchGestureHandler>
 
-            <TouchableOpacity
-              style={[styles.navButton, styles.nextButton]}
-              onPress={goNext}
-              disabled={currentIndex === images.length - 1}
-            >
-              <Text style={styles.navButtonText}>〉</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+                     <TouchableOpacity
+                       style={[styles.navButton, styles.nextButton]}
+                       onPress={goNext}
+                       disabled={currentIndex === images.length - 1}
+                     >
+                       <Text style={styles.navButtonText}>〉</Text>
+                     </TouchableOpacity>
+                   </View>
+                 </PanGestureHandler>
+               )}
 
         {screen === 'final' && (
           <RouletteScreen onFinish={() => setScreen('final')} />
@@ -351,39 +378,40 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold'
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  imageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    maxWidth: '80%'
-  },
-  image: {
-    width: width * 0.9,
-    height: height * 0.7,
-    borderRadius: 8
-  },
-  navButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 10
-  },
-  prevButton: {
-    marginRight: 10
-  },
-  nextButton: {
-    marginLeft: 10
-  },
+   container: {
+      flex: 1,
+      backgroundColor: '#000',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    imageContainer: {
+      width: '100%',
+      height: '70%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    image: {
+      width: '90%',
+      height: '90%',
+      borderRadius: 8,
+    },
+    navButton: {
+      position: 'absolute',
+      top: '50%',
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10,
+    },
+    prevButton: {
+      left: 20,
+    },
+    nextButton: {
+      right: 20,
+    },
   navButtonText: {
     color: '#fff',
     fontSize: 30,
